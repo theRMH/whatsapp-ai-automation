@@ -72,7 +72,7 @@ async function main() {
       const url = `${appUrl}${job.path}`;
       await client.query(
         `select cron.schedule(
-           $1,
+           $1::text,
            '* * * * *',
            format(
              $sql$
@@ -85,7 +85,7 @@ async function main() {
                body := '{}'::jsonb
              );
              $sql$,
-             $2, $3
+             $2::text, $3::text
            )
          )`,
         [job.name, url, VAULT_SECRET_NAME]
