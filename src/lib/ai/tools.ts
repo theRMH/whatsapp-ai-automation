@@ -80,6 +80,8 @@ export const IMPLEMENTED_TOOLS: ReadonlySet<string> = new Set([
   ToolName.HELP,
   ToolName.ACCOUNT_STATUS,
   ToolName.GOOGLE_STATUS,
+  ToolName.GOOGLE_CONNECT,
+  ToolName.GOOGLE_DISCONNECT,
   ToolName.TASK_CREATE,
   ToolName.TASK_LIST,
   ToolName.TASK_UPDATE,
@@ -255,8 +257,9 @@ const toolDescriptions: Record<ToolNameType, string> = {
   DOCUMENT_SEARCH: "Search stored document references by metadata. Not yet available in this deployment.",
   DOCUMENT_RESEND: "Resend a previously received file if still available. Not yet available in this deployment.",
 
-  GOOGLE_CONNECT: "Start the Google account connection flow. Not yet available in this deployment.",
-  GOOGLE_DISCONNECT: "Disconnect the user's Google account. Not yet available in this deployment.",
+  GOOGLE_CONNECT:
+    "Start the Google account connection flow. Generates a one-time secure link for the user to open in their browser to sign in with Google and grant Calendar/Sheets access.",
+  GOOGLE_DISCONNECT: "Disconnect the user's Google account and revoke its access.",
   GOOGLE_STATUS: "Check whether the user's Google account is connected.",
 
   HELP: "Explain what this assistant can currently do.",

@@ -1,5 +1,4 @@
 import { DateTime } from "luxon";
-import { getSupabaseAdminClient } from "@/lib/db/supabase-admin";
 import type { UserRecord } from "@/lib/db/repositories/users";
 import type { UserKeyRecord } from "@/lib/crypto/user-encryption";
 import {
@@ -14,6 +13,10 @@ import {
   type TaskRecord,
   type TaskWhenFilter,
 } from "@/lib/db/repositories/tasks";
+import { createGoogleConnectLink, disconnectGoogleAccount } from "@/lib/google/connection-service";
+import { getGoogleConnectionStatus } from "@/lib/db/repositories/google-connections";
+import { GoogleNotConfiguredError } from "@/lib/google/config";
+import { logger } from "@/lib/logger";
 import { IMPLEMENTED_TOOLS, READ_ONLY_TOOLS, ToolName, validateToolArguments, ToolValidationError } from "./tools";
 import type { RequestedToolCall, ToolResultForModel } from "./types";
 
@@ -75,7 +78,7 @@ export async function executeToolCall(
           capabilities: [
             "Creating, listing, updating, completing, cancelling, and snoozing tasks",
             "Answering questions about your account status",
-            "Reporting whether your Google account is connected",
+            "Connecting, disconnecting, and checking the status of your Google account",
           ],
           comingSoon: [
             "Reminders and recurring tasks",
@@ -100,22 +103,34 @@ export async function executeToolCall(
       };
 
     case ToolName.GOOGLE_STATUS: {
-      const db = getSupabaseAdminClient();
-      const { data } = await db
-        .from("google_connections")
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const status = await getGoogleConnectionStatus(user.id);
+      return toolResult(call, { ok: true, connected: status === "CONNECTED", status });
+    }
 
-      return {
-        toolCallId: call.id,
-        name: call.name,
-        resultJson: JSON.stringify({
+    case ToolName.GOOGLE_CONNECT: {
+      try {
+        const link = await createGoogleConnectLink(user.id);
+        return toolResult(call, {
           ok: true,
-          connected: data?.status === "CONNECTED",
-          status: data?.status ?? "DISCONNECTED",
-        }),
-      };
+          connectUrl: link,
+          message: "Send the user this one-time link to connect their Google account. It expires in 10 minutes.",
+        });
+      } catch (err) {
+        if (err instanceof GoogleNotConfiguredError) {
+          return toolResult(call, {
+            ok: false,
+            error: "NOT_AVAILABLE",
+            message: "Google connection is not available in this deployment yet.",
+          });
+        }
+        logger.error("google_connect_tool_failed", { userId: user.id, errorCode: err instanceof Error ? err.name : "unknown" });
+        return toolResult(call, { ok: false, error: "INTERNAL_ERROR", message: "Could not start the Google connection." });
+      }
+    }
+
+    case ToolName.GOOGLE_DISCONNECT: {
+      await disconnectGoogleAccount(user.id, userKeyRecord);
+      return toolResult(call, { ok: true, status: "DISCONNECTED" });
     }
 
     case ToolName.TASK_CREATE: {

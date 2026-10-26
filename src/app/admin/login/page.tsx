@@ -1,16 +1,19 @@
+import { Card, CardBody } from "@/components/ui/card";
 import { LoginForm } from "./login-form";
 
 export default function AdminLoginPage() {
   return (
-    <main className="flex-1 flex items-center justify-center p-8">
-      <div className="flex flex-col gap-6 w-full max-w-sm">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">Admin sign in</h1>
-          <p className="text-sm text-neutral-500">
-            Access is restricted to authorized administrators.
-          </p>
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6">
+      <div className="flex w-full max-w-sm flex-col gap-6">
+        <div className="flex flex-col gap-1 text-center">
+          <h1 className="text-xl font-semibold text-text-primary">Admin sign in</h1>
+          <p className="text-sm text-text-secondary">Access is restricted to authorized administrators.</p>
         </div>
-        <LoginForm />
+        <Card>
+          <CardBody>
+            <LoginForm />
+          </CardBody>
+        </Card>
       </div>
     </main>
   );
